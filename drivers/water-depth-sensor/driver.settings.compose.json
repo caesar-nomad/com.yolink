@@ -1,162 +1,178 @@
 [
 	{
-		"id": "serviceZone",
-		"type": "dropdown",
+		"type": "group",
 		"label": {
-			"en": "Service Zone",
-			"nl": "Servicezone",
-			"da": "Servicezone",
-			"de": "Servicezone",
-			"es": "Zona de servicio",
-			"fr": "Zone de service",
-			"it": "Zona di servizio",
-			"no": "Tjenesteområde",
-			"sv": "Servicezon",
-			"pl": "Strefa serwisowa",
-			"ru": "Сервисная зона",
-			"ko": "서비스 지역"
+			"en": "Sensor configuration"
 		},
-		"hint": {
-			"en": "Select the service zone your device is registered in. US = United States, EU/UK = Europe and United Kingdom",
-			"nl": "Selecteer de servicezone waarin uw apparaat is geregistreerd. US = Verenigde Staten, EU/UK = Europa en Verenigd Koninkrijk",
-			"da": "Vælg den servicezone, din enhed er registreret i. US = USA, EU/UK = Europa og Storbritannien",
-			"de": "Wählen Sie die Servicezone, in der Ihr Gerät registriert ist. US = Vereinigte Staaten, EU/UK = Europa und Vereinigtes Königreich",
-			"es": "Seleccione la zona de servicio en la que está registrado su dispositivo. US = Estados Unidos, EU/UK = Europa y Reino Unido",
-			"fr": "Sélectionnez la zone de service dans laquelle votre appareil est enregistré. US = États-Unis, EU/UK = Europe et Royaume-Uni",
-			"it": "Seleziona la zona di servizio in cui è registrato il tuo dispositivo. US = Stati Uniti, EU/UK = Europa e Regno Unito",
-			"no": "Velg tjenesteområdet enheten din er registrert i. US = USA, EU/UK = Europa og Storbritannia",
-			"sv": "Välj den servicezon där din enhet är registrerad. US = USA, EU/UK = Europa och Storbritannien",
-			"pl": "Wybierz strefę serwisową, w której zarejestrowane jest Twoje urządzenie. US = Stany Zjednoczone, EU/UK = Europa i Wielka Brytania",
-			"ru": "Выберите сервисную зону, в которой зарегистрировано ваше устройство. US = Соединенные Штаты, EU/UK = Европа и Великобритания",
-			"ko": "장치가 등록된 서비스 지역을 선택하십시오. US = 미국, EU/UK = 유럽 및 영국"
-		},
-		"values": [
+		"children": [
 			{
-				"id": "us",
+				"id": "serviceZone",
+				"type": "dropdown",
 				"label": {
-					"en": "US (United States)",
-					"nl": "US (Verenigde Staten)",
-					"da": "US (USA)",
-					"de": "US (Vereinigte Staaten)",
-					"es": "US (Estados Unidos)",
-					"fr": "US (États-Unis)",
-					"it": "US (Stati Uniti)",
-					"no": "US (USA)",
-					"sv": "US (USA)",
-					"pl": "US (Stany Zjednoczone)",
-					"ru": "US (Соединенные Штаты)",
-					"ko": "US (미국)"
-				}
+					"en": "Service Zone",
+					"nl": "Servicezone",
+					"da": "Servicezone",
+					"de": "Servicezone",
+					"es": "Zona de servicio",
+					"fr": "Zone de service",
+					"it": "Zona di servizio",
+					"no": "Tjenesteområde",
+					"sv": "Servicezon",
+					"pl": "Strefa serwisowa",
+					"ru": "Сервисная зона",
+					"ko": "서비스 지역"
+				},
+				"hint": {
+					"en": "Select the service zone your device is registered in. US = United States, EU/UK = Europe and United Kingdom",
+					"nl": "Selecteer de servicezone waarin uw apparaat is geregistreerd. US = Verenigde Staten, EU/UK = Europa en Verenigd Koninkrijk",
+					"da": "Vælg den servicezone, din enhed er registreret i. US = USA, EU/UK = Europa og Storbritannien",
+					"de": "Wählen Sie die Servicezone, in der Ihr Gerät registriert ist. US = Vereinigte Staaten, EU/UK = Europa und Vereinigtes Königreich",
+					"es": "Seleccione la zona de servicio en la que está registrado su dispositivo. US = Estados Unidos, EU/UK = Europa y Reino Unido",
+					"fr": "Sélectionnez la zone de service dans laquelle votre appareil est enregistré. US = États-Unis, EU/UK = Europe et Royaume-Uni",
+					"it": "Seleziona la zona di servizio in cui è registrato il tuo dispositivo. US = Stati Uniti, EU/UK = Europa e Regno Unito",
+					"no": "Velg tjenesteområdet enheten din er registrert i. US = USA, EU/UK = Europa og Storbritannia",
+					"sv": "Välj den servicezon där din enhet är registrerad. US = USA, EU/UK = Europa och Storbritannien",
+					"pl": "Wybierz strefę serwisową, w której zarejestrowane jest Twoje urządzenie. US = Stany Zjednoczone, EU/UK = Europa i Wielka Brytania",
+					"ru": "Выберите сервисную зону, в которой зарегистрировано ваше устройство. US = Соединенные Штаты, EU/UK = Европа и Великобритания",
+					"ko": "장치가 등록된 서비스 지역을 선택하십시오. US = 미국, EU/UK = 유럽 및 영국"
+				},
+				"values": [
+					{
+						"id": "us",
+						"label": {
+							"en": "US (United States)",
+							"nl": "US (Verenigde Staten)",
+							"da": "US (USA)",
+							"de": "US (Vereinigte Staaten)",
+							"es": "US (Estados Unidos)",
+							"fr": "US (États-Unis)",
+							"it": "US (Stati Uniti)",
+							"no": "US (USA)",
+							"sv": "US (USA)",
+							"pl": "US (Stany Zjednoczone)",
+							"ru": "US (Соединенные Штаты)",
+							"ko": "US (미국)"
+						}
+					},
+					{
+						"id": "eu_uk",
+						"label": {
+							"en": "EU/UK (Europe and United Kingdom)",
+							"nl": "EU/UK (Europa en Verenigd Koninkrijk)",
+							"da": "EU/UK (Europa og Storbritannien)",
+							"de": "EU/UK (Europa und Vereinigtes Königreich)",
+							"es": "EU/UK (Europa y Reino Unido)",
+							"fr": "EU/UK (Europe et Royaume-Uni)",
+							"it": "EU/UK (Europa e Regno Unito)",
+							"no": "EU/UK (Europa og Storbritannia)",
+							"sv": "EU/UK (Europa och Storbritannien)",
+							"pl": "EU/UK (Europa i Wielka Brytania)",
+							"ru": "EU/UK (Европа и Великобритания)",
+							"ko": "EU/UK (유럽 및 영국)"
+						}
+					}
+				],
+				"value": "us"
 			},
 			{
-				"id": "eu_uk",
+				"id": "sensorRange",
+				"type": "dropdown",
 				"label": {
-					"en": "EU/UK (Europe and United Kingdom)",
-					"nl": "EU/UK (Europa en Verenigd Koninkrijk)",
-					"da": "EU/UK (Europa og Storbritannien)",
-					"de": "EU/UK (Europa und Vereinigtes Königreich)",
-					"es": "EU/UK (Europa y Reino Unido)",
-					"fr": "EU/UK (Europe et Royaume-Uni)",
-					"it": "EU/UK (Europa e Regno Unito)",
-					"no": "EU/UK (Europa og Storbritannia)",
-					"sv": "EU/UK (Europa och Storbritannien)",
-					"pl": "EU/UK (Europa i Wielka Brytania)",
-					"ru": "EU/UK (Европа и Великобритания)",
-					"ko": "EU/UK (유럽 및 영국)"
-				}
-			}
-		],
-		"value": "us"
-	},
-	{
-		"id": "sensorRange",
-		"type": "dropdown",
-		"label": {
-			"en": "Length of sensor cable 5m or 10m"
-		},
-		"hint": {
-			"en": "Select the cable length of your YoLink water depth sensor. 5m uses a range factor of 0.5, 10m uses 1.0."
-		},
-		"values": [
-			{
-				"id": "0.5",
-				"label": {
-					"en": "5m"
-				}
+					"en": "Length of sensor cable"
+				},
+				"hint": {
+					"en": "Select the cable length of your YoLink water depth sensor."
+				},
+				"values": [
+					{
+						"id": "0.5",
+						"label": {
+							"en": "5m"
+						}
+					},
+					{
+						"id": "1.0",
+						"label": {
+							"en": "10m"
+						}
+					}
+				],
+				"value": "0.5"
 			},
 			{
-				"id": "1.0",
+				"id": "liquidDensity",
+				"type": "number",
 				"label": {
-					"en": "10m"
-				}
+					"en": "Liquid density"
+				},
+				"hint": {
+					"en": "Density of the liquid relative to water. Use 1.0 for water."
+				},
+				"value": 1
+			},
+			{
+				"id": "tankDepth",
+				"type": "number",
+				"label": {
+					"en": "Tank depth (m)",
+					"nl": "Tankdiepte (m)",
+					"da": "Tankdybde (m)",
+					"de": "Tanktiefe (m)",
+					"es": "Profundidad del tanque (m)",
+					"fr": "Profondeur du réservoir (m)",
+					"it": "Profondità del serbatoio (m)",
+					"no": "Tankdybde (m)",
+					"sv": "Tankdjup (m)",
+					"pl": "Głębokość zbiornika (m)",
+					"ru": "Глубина резервуара (м)",
+					"ko": "탱크 깊이 (m)"
+				},
+				"hint": {
+					"en": "Total depth of your tank in meters.",
+					"nl": "Totale diepte van uw tank in meters.",
+					"da": "Din tanks samlede dybde i meter.",
+					"de": "Gesamttiefe Ihres Tanks in Metern.",
+					"es": "Profundidad total de su tanque en metros.",
+					"fr": "Profondeur totale de votre réservoir en mètres.",
+					"it": "Profondità totale del serbatoio in metri.",
+					"no": "Total dybde på tanken i meter.",
+					"sv": "Tankens totala djup i meter.",
+					"pl": "Całkowita głębokość zbiornika w metrach.",
+					"ru": "Общая глубина резервуара в метрах.",
+					"ko": "탱크의 전체 깊이(미터)."
+				},
+				"value": 2
 			}
-		],
-		"value": "0.5"
+		]
 	},
 	{
-		"id": "liquidDensity",
-		"type": "number",
+		"type": "group",
 		"label": {
-			"en": "Liquid density"
+			"en": "Alarm thresholds"
 		},
-		"hint": {
-			"en": "Density of the liquid relative to water. Use 1.0 for water."
-		},
-		"value": 1.0
-	},
-	{
-		"id": "tankDepth",
-		"type": "number",
-		"label": {
-			"en": "Tank depth (m)",
-			"nl": "Tankdiepte (m)",
-			"da": "Tankdybde (m)",
-			"de": "Tanktiefe (m)",
-			"es": "Profundidad del tanque (m)",
-			"fr": "Profondeur du réservoir (m)",
-			"it": "Profondità del serbatoio (m)",
-			"no": "Tankdybde (m)",
-			"sv": "Tankdjup (m)",
-			"pl": "Głębokość zbiornika (m)",
-			"ru": "Глубина резервуара (м)",
-			"ko": "탱크 깊이 (m)"
-		},
-		"hint": {
-			"en": "Total depth of your tank in meters.",
-			"nl": "Totale diepte van uw tank in meters.",
-			"da": "Din tanks samlede dybde i meter.",
-			"de": "Gesamttiefe Ihres Tanks in Metern.",
-			"es": "Profundidad total de su tanque en metros.",
-			"fr": "Profondeur totale de votre réservoir en mètres.",
-			"it": "Profondità totale del serbatoio in metri.",
-			"no": "Total dybde på tanken i meter.",
-			"sv": "Tankens totala djup i meter.",
-			"pl": "Całkowita głębokość zbiornika w metrach.",
-			"ru": "Общая глубина резервуара в метрах.",
-			"ko": "탱크의 전체 깊이(미터)."
-		},
-		"value": 2.0
-	},
-	{
-		"id": "lowDepthThreshold",
-		"type": "number",
-		"label": {
-			"en": "Low depth alarm threshold (meters)"
-		},
-		"hint": {
-			"en": "Trigger a low water alarm in Homey when depth falls at or below this value (meters). Set to 0 to use YoLink's own alarm instead."
-		},
-		"value": 0
-	},
-	{
-		"id": "highDepthThreshold",
-		"type": "number",
-		"label": {
-			"en": "High depth alarm threshold (meters)"
-		},
-		"hint": {
-			"en": "Trigger a high water alarm in Homey when depth reaches or exceeds this value (meters). Set to 0 to use YoLink's own alarm instead."
-		},
-		"value": 0
+		"children": [
+			{
+				"id": "lowDepthThreshold",
+				"type": "number",
+				"label": {
+					"en": "Low depth alarm threshold (meters)"
+				},
+				"hint": {
+					"en": "Trigger a low water alarm in Homey when depth falls at or below this value (meters). Set to 0 to use YoLink's own alarm instead."
+				},
+				"value": 0
+			},
+			{
+				"id": "highDepthThreshold",
+				"type": "number",
+				"label": {
+					"en": "High depth alarm threshold (meters)"
+				},
+				"hint": {
+					"en": "Trigger a high water alarm in Homey when depth reaches or exceeds this value (meters). Set to 0 to use YoLink's own alarm instead."
+				},
+				"value": 0
+			}
+		]
 	}
 ]
