@@ -85,5 +85,8 @@
 	},
 	"1.0.24": {
 		"en": "Updated water depth driver from pull request by Caesar"
+	},
+	"1.0.25": {
+		"en": "Tidied Water Depth Sensor settings: grouped them under headings to remove duplicated labels, and simplified the cable-length label and hint."
 	}
 }
