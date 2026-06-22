@@ -25,6 +25,11 @@ const GarageDoorDevice = require('../drivers/garage_door/device');
 
 Module._load = originalModuleLoad;
 
+// yoLinkAPI.normalizeUAID/isValidNormalizedUAID require the canonical `ua_` + 32 hex-char format.
+const UAID_A = `ua_${'A'.repeat(32)}`;
+const UAID_B = `ua_${'B'.repeat(32)}`;
+const UAID_ACCOUNT = `ua_${'C'.repeat(32)}`;
+
 function createMockApp(initialUAIDList)
 {
 	const settingsStore = {
@@ -110,7 +115,7 @@ async function testSameUaidRefreshIsDeduped()
 	const now = Date.now();
 	const api = new YoLinkAPI(createMockApp([
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			access_token: 'expired',
 			refresh_token: 'refresh_a',
 			expires_at: now - 1000,
@@ -130,8 +135,8 @@ async function testSameUaidRefreshIsDeduped()
 	};
 
 	const results = await Promise.all([
-		api.getAccessTokenForUAID('UAID_A', null, 'us'),
-		api.getAccessTokenForUAID('UAID_A', null, 'us'),
+		api.getAccessTokenForUAID(UAID_A, null, 'us'),
+		api.getAccessTokenForUAID(UAID_A, null, 'us'),
 	]);
 
 	assert(refreshCalls === 1, `Expected one refresh call, got ${refreshCalls}`);
@@ -143,13 +148,13 @@ async function testDifferentUaidRefreshCanRunConcurrently()
 	const now = Date.now();
 	const api = new YoLinkAPI(createMockApp([
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			access_token: 'expired_a',
 			refresh_token: 'refresh_a',
 			expires_at: now - 1000,
 		},
 		{
-			UAID: 'UAID_B',
+			UAID: UAID_B,
 			access_token: 'expired_b',
 			refresh_token: 'refresh_b',
 			expires_at: now - 1000,
@@ -170,12 +175,12 @@ async function testDifferentUaidRefreshCanRunConcurrently()
 
 	const startedAt = Date.now();
 	await Promise.all([
-		api.getAccessTokenForUAID('UAID_A', null, 'us'),
-		api.getAccessTokenForUAID('UAID_B', null, 'eu'),
+		api.getAccessTokenForUAID(UAID_A, null, 'us'),
+		api.getAccessTokenForUAID(UAID_B, null, 'eu'),
 	]);
 	const elapsed = Date.now() - startedAt;
 
-	assert(calls.UAID_A === 1 && calls.UAID_B === 1, 'Expected one refresh per UAID');
+	assert(calls[UAID_A] === 1 && calls[UAID_B] === 1, 'Expected one refresh per UAID');
 	assert(elapsed < 110, `Expected concurrent refresh duration under 110ms, got ${elapsed}ms`);
 }
 
@@ -197,7 +202,7 @@ async function testGetHomeInfoUsesZoneEndpoint()
 		return { desc: 'Success' };
 	};
 
-	await api.getHomeInfo('UAID_A', 'eu');
+	await api.getHomeInfo(UAID_A, 'eu');
 	assert(tokenZone === 'eu', 'Expected getHomeInfo to request token in eu zone');
 	assert(requestURL.indexOf('api-eu.yosmart.com') >= 0, 'Expected getHomeInfo to call EU API endpoint');
 }
@@ -209,7 +214,7 @@ async function testPostMqttMessagePrefersZoneSpecificClient()
 
 	api.MQTTList = [
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			serviceZoneID: 'us',
 			homeID: 'HOME_US',
 			mqttReady: Promise.resolve(),
@@ -222,7 +227,7 @@ async function testPostMqttMessagePrefersZoneSpecificClient()
 			},
 		},
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			serviceZoneID: 'eu',
 			homeID: 'HOME_EU',
 			mqttReady: Promise.resolve(),
@@ -237,7 +242,7 @@ async function testPostMqttMessagePrefersZoneSpecificClient()
 	];
 
 	await api.postMQTTMessage({
-		UAID: 'UAID_A',
+		UAID: UAID_A,
 		serviceZoneID: 'eu',
 		command: { method: 'test.command' },
 	});
@@ -250,7 +255,7 @@ async function testTokenRefreshRestartsMqttClient()
 	const now = Date.now();
 	const api = new YoLinkAPI(createMockApp([
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			access_token: 'expired_token',
 			refresh_token: 'refresh_a',
 			expires_at: now - 1000,
@@ -266,7 +271,7 @@ async function testTokenRefreshRestartsMqttClient()
 
 	api.MQTTList = [
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			serviceZoneID: 'us',
 			homeID: 'HOME_US',
 			mqttReady: Promise.resolve(),
@@ -297,7 +302,7 @@ async function testTokenRefreshRestartsMqttClient()
 		};
 	};
 
-	const token = await api.getAccessTokenForUAID('UAID_A', null, 'us');
+	const token = await api.getAccessTokenForUAID(UAID_A, null, 'us');
 	await sleep(10);
 
 	assert(token === 'new_token_a', `Expected refreshed token, got ${token}`);
@@ -312,7 +317,7 @@ async function testGarageDoorControlUsesAccountUaid()
 	let capturedArgs = null;
 
 	device.getData = async () => ({
-		UAID: 'UAID_ACCOUNT',
+		UAID: UAID_ACCOUNT,
 		parentDeviceId: 'PARENT_DEVICE_ID',
 		parentDeviceUDID: 'PARENT_DEVICE_UDID',
 		parentDeviceToken: 'PARENT_DEVICE_TOKEN',
@@ -341,7 +346,7 @@ async function testGarageDoorControlUsesAccountUaid()
 	const result = await device.onOffCapabilityListener(true);
 
 	assert(result === true, 'Expected garage door control to succeed');
-	assert(capturedArgs && capturedArgs.UAID === 'UAID_ACCOUNT', `Expected controlDevice to use the account UAID, got ${capturedArgs ? capturedArgs.UAID : 'no call'}`);
+	assert(capturedArgs && capturedArgs.UAID === UAID_ACCOUNT, `Expected controlDevice to use the account UAID, got ${capturedArgs ? capturedArgs.UAID : 'no call'}`);
 	assert(capturedArgs.deviceId === 'PARENT_DEVICE_ID', 'Expected garage door control to target the parent device ID');
 	assert(capturedArgs.deviceToken === 'PARENT_DEVICE_TOKEN', 'Expected garage door control to use the parent device token');
 	assert(capturedArgs.command === 'GarageDoor.toggle', 'Expected garage door toggle command');
