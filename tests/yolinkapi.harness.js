@@ -26,6 +26,10 @@ const DoorSensorDevice = require('../drivers/door-sensor/device');
 
 Module._load = originalModuleLoad;
 
+// Valid-looking UAIDs: getAccessTokenForUAID() rejects anything that is not ua_ + 32 hex characters
+const UAID_A = 'ua_0123456789ABCDEF0123456789ABCDEF';
+const UAID_B = 'ua_FEDCBA9876543210FEDCBA9876543210';
+
 function createMockApp(initialUAIDList)
 {
 	const settingsStore = {
@@ -111,7 +115,7 @@ async function testSameUaidRefreshIsDeduped()
 	const now = Date.now();
 	const api = new YoLinkAPI(createMockApp([
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			access_token: 'expired',
 			refresh_token: 'refresh_a',
 			expires_at: now - 1000,
@@ -131,8 +135,8 @@ async function testSameUaidRefreshIsDeduped()
 	};
 
 	const results = await Promise.all([
-		api.getAccessTokenForUAID('UAID_A', null, 'us'),
-		api.getAccessTokenForUAID('UAID_A', null, 'us'),
+		api.getAccessTokenForUAID(UAID_A, null, 'us'),
+		api.getAccessTokenForUAID(UAID_A, null, 'us'),
 	]);
 
 	assert(refreshCalls === 1, `Expected one refresh call, got ${refreshCalls}`);
@@ -144,13 +148,13 @@ async function testDifferentUaidRefreshCanRunConcurrently()
 	const now = Date.now();
 	const api = new YoLinkAPI(createMockApp([
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			access_token: 'expired_a',
 			refresh_token: 'refresh_a',
 			expires_at: now - 1000,
 		},
 		{
-			UAID: 'UAID_B',
+			UAID: UAID_B,
 			access_token: 'expired_b',
 			refresh_token: 'refresh_b',
 			expires_at: now - 1000,
@@ -171,12 +175,12 @@ async function testDifferentUaidRefreshCanRunConcurrently()
 
 	const startedAt = Date.now();
 	await Promise.all([
-		api.getAccessTokenForUAID('UAID_A', null, 'us'),
-		api.getAccessTokenForUAID('UAID_B', null, 'eu'),
+		api.getAccessTokenForUAID(UAID_A, null, 'us'),
+		api.getAccessTokenForUAID(UAID_B, null, 'eu'),
 	]);
 	const elapsed = Date.now() - startedAt;
 
-	assert(calls.UAID_A === 1 && calls.UAID_B === 1, 'Expected one refresh per UAID');
+	assert(calls[UAID_A] === 1 && calls[UAID_B] === 1, 'Expected one refresh per UAID');
 	assert(elapsed < 110, `Expected concurrent refresh duration under 110ms, got ${elapsed}ms`);
 }
 
@@ -198,7 +202,7 @@ async function testGetHomeInfoUsesZoneEndpoint()
 		return { desc: 'Success' };
 	};
 
-	await api.getHomeInfo('UAID_A', 'eu');
+	await api.getHomeInfo(UAID_A, 'eu');
 	assert(tokenZone === 'eu', 'Expected getHomeInfo to request token in eu zone');
 	assert(requestURL.indexOf('api-eu.yosmart.com') >= 0, 'Expected getHomeInfo to call EU API endpoint');
 }
@@ -210,7 +214,7 @@ async function testPostMqttMessagePrefersZoneSpecificClient()
 
 	api.MQTTList = [
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			serviceZoneID: 'us',
 			homeID: 'HOME_US',
 			mqttReady: Promise.resolve(),
@@ -223,7 +227,7 @@ async function testPostMqttMessagePrefersZoneSpecificClient()
 			},
 		},
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			serviceZoneID: 'eu',
 			homeID: 'HOME_EU',
 			mqttReady: Promise.resolve(),
@@ -238,7 +242,7 @@ async function testPostMqttMessagePrefersZoneSpecificClient()
 	];
 
 	await api.postMQTTMessage({
-		UAID: 'UAID_A',
+		UAID: UAID_A,
 		serviceZoneID: 'eu',
 		command: { method: 'test.command' },
 	});
@@ -251,7 +255,7 @@ async function testTokenRefreshRestartsMqttClient()
 	const now = Date.now();
 	const api = new YoLinkAPI(createMockApp([
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			access_token: 'expired_token',
 			refresh_token: 'refresh_a',
 			expires_at: now - 1000,
@@ -267,7 +271,7 @@ async function testTokenRefreshRestartsMqttClient()
 
 	api.MQTTList = [
 		{
-			UAID: 'UAID_A',
+			UAID: UAID_A,
 			serviceZoneID: 'us',
 			homeID: 'HOME_US',
 			mqttReady: Promise.resolve(),
@@ -298,7 +302,7 @@ async function testTokenRefreshRestartsMqttClient()
 		};
 	};
 
-	const token = await api.getAccessTokenForUAID('UAID_A', null, 'us');
+	const token = await api.getAccessTokenForUAID(UAID_A, null, 'us');
 	await sleep(10);
 
 	assert(token === 'new_token_a', `Expected refreshed token, got ${token}`);
@@ -357,7 +361,7 @@ function createDoorSensorDevice()
 
 	device.getData = () => ({
 		id: 'DOOR_1',
-		UAID: 'UAID_A',
+		UAID: UAID_A,
 		type: 'DoorSensor',
 		deviceToken: 'DOOR_TOKEN',
 	});
