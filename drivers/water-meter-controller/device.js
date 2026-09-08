@@ -1,8 +1,8 @@
 'use strict';
 
-const Homey = require('homey');
+const YoLinkDevice = require('../yoLinkDevice');
 
-module.exports = class WaterMeterControllerDevice extends Homey.Device
+module.exports = class WaterMeterControllerDevice extends YoLinkDevice
 {
 
 	/**
@@ -18,7 +18,7 @@ module.exports = class WaterMeterControllerDevice extends Homey.Device
 			this.addCapability('meter_water.daily').catch(this.error);
 		}
 
-		this.updateState();
+		this.refreshState().catch(this.error);
 		this.log('WaterMeterControllerDevice has been initialized');
 	}
 
@@ -90,10 +90,10 @@ module.exports = class WaterMeterControllerDevice extends Homey.Device
 			{
 				this.homey.app.updateLog(`Error updating state for device ${data.id}: ${state.msg}`, 0);
 				this.setWarning(`Error: ${state.msg}`).catch(this.error);
-				return;
+				return false;
 			}
 			this.setUnavailable('Offline').catch(this.error);
-			return;
+			return false;
 		}
 		this.setAvailable().catch(this.error);
 
@@ -101,7 +101,7 @@ module.exports = class WaterMeterControllerDevice extends Homey.Device
 		if (!attributes)
 		{
 			this.homey.app.updateLog(`Missing attributes in state for device ${data.id}`, 0);
-			return;
+			return true;
 		}
 
 		let meterConversion = (1 / attributes.meterStepFactor) * 100000; // The meter value is returned in centiliters, so convert to liters
@@ -142,6 +142,8 @@ module.exports = class WaterMeterControllerDevice extends Homey.Device
 		}
 
 		this.driver.updateMQTTState(data);
+
+		return true;
 	}
 
 	async processMQTTMessage(mqttMessage)
@@ -164,6 +166,8 @@ module.exports = class WaterMeterControllerDevice extends Homey.Device
 		{
 			return false;
 		}
+
+		this.markOnline();
 
 		if (!mqttData)
 		{

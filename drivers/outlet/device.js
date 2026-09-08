@@ -1,8 +1,8 @@
 'use strict';
 
-const Homey = require('homey');
+const YoLinkDevice = require('../yoLinkDevice');
 
-module.exports = class outletDevice extends Homey.Device
+module.exports = class outletDevice extends YoLinkDevice
 {
 
 	/**
@@ -13,7 +13,7 @@ module.exports = class outletDevice extends Homey.Device
 		// Add the capability listener for the OnOff capability
 		this.registerCapabilityListener('onoff', this.onOffCapabilityListener.bind(this));
 
-		this.updateState();
+		this.refreshState().catch(this.error);
 		this.homey.app.updateLog('OutletDevice has been initialized');
 	}
 
@@ -22,7 +22,7 @@ module.exports = class outletDevice extends Homey.Device
 	 */
 	async onAdded()
 	{
-		this.updateState();
+		this.refreshState().catch(this.error);
 		this.homey.app.updateLog('OutletDevice has been added');
 	}
 
@@ -85,10 +85,10 @@ module.exports = class outletDevice extends Homey.Device
 			{
 				this.homey.app.updateLog(`Error updating state for device ${data.id}: ${state.msg}`, 0);
 				this.setWarning(`Error: ${state.msg}`).catch(this.error);
-				return;
+				return false;
 			}
 			this.setUnavailable('Offline').catch(this.error);
-			return;
+			return false;
 		}
 		this.setAvailable().catch(this.error);
 
@@ -96,6 +96,8 @@ module.exports = class outletDevice extends Homey.Device
 		this.setCapabilityValue('measure_power', state.data.power / 10).catch(this.error);
 
 		this.driver.updateMQTTState(data);
+
+		return true;
 	}
 
 	async processMQTTMessage(mqttMessage)
@@ -108,6 +110,8 @@ module.exports = class outletDevice extends Homey.Device
 		{
 			return false;
 		}
+
+		this.markOnline();
 
 		// Log the device status
 		this.homey.app.updateLog(`OutletDevice MQTT message received: ${JSON.stringify(mqttData)}`);

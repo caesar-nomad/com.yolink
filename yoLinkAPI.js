@@ -1068,9 +1068,19 @@ module.exports = class YoLinkAPI extends SimpleClass
 
 			MQTTClient.on('close', () =>
 			{
-				this.app.updateLog(`MQTT connection closed for UAID ${brokerConfig.UAID}`);
-				// Remove this client from the MQTTList when connection is closed
-				this.MQTTList = this.MQTTList.filter((item) => item.UAID !== brokerConfig.UAID || item.serviceZoneID !== brokerConfig.serviceZoneID);
+				// The MQTT library reconnects on its own after a transient drop (reconnectPeriod), so only
+				// forget this client when the close was deliberate: an authentication failure above, or
+				// end() having been called (e.g. by refreshMQTTClientsForUAID when the token was refreshed).
+				const deliberateClose = connectionFailed || MQTTClient.disconnecting === true;
+				if (!deliberateClose)
+				{
+					this.app.updateLog(`MQTT connection closed for UAID ${brokerConfig.UAID}, waiting for automatic reconnect`);
+					return;
+				}
+
+				this.app.updateLog(`MQTT connection ended for UAID ${brokerConfig.UAID}`);
+				// Only remove the entry that still points at this client so a late close from a replaced client cannot evict its replacement
+				this.MQTTList = this.MQTTList.filter((item) => item.MQTTClient !== MQTTClient);
 			});
 
 			MQTTClient.on('message', async (topic, message) =>

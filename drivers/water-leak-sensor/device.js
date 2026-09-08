@@ -1,8 +1,8 @@
 'use strict';
 
-const Homey = require('homey');
+const YoLinkDevice = require('../yoLinkDevice');
 
-module.exports = class LeakSensorDevice extends Homey.Device
+module.exports = class LeakSensorDevice extends YoLinkDevice
 {
 
 	/**
@@ -10,7 +10,7 @@ module.exports = class LeakSensorDevice extends Homey.Device
 	 */
 	async onInit()
 	{
-		this.updateState();
+		this.refreshState().catch(this.error);
 		this.log('LeakSensorDevice has been initialized');
 	}
 
@@ -65,10 +65,10 @@ module.exports = class LeakSensorDevice extends Homey.Device
 			{
 				this.homey.app.updateLog(`Error updating state for device ${data.id}: ${state.msg}`, 0);
 				this.setWarning(`Error: ${state.msg}`).catch(this.error);
-				return;
+				return false;
 			}
 			this.setUnavailable('Offline').catch(this.error);
-			return;
+			return false;
 		}
 		this.setAvailable().catch(this.error);
 
@@ -83,6 +83,8 @@ module.exports = class LeakSensorDevice extends Homey.Device
 		}
 
 		this.driver.updateMQTTState(data);
+
+		return true;
 	}
 
 	async processMQTTMessage(mqttMessage)
@@ -105,6 +107,8 @@ module.exports = class LeakSensorDevice extends Homey.Device
 		{
 			return false;
 		}
+
+		this.markOnline();
 
 		// Log the device status
 		this.homey.app.updateLog(`LeakSensorDevice MQTT message received: ${JSON.stringify(mqttData)}`);
