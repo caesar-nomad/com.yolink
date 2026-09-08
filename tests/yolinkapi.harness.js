@@ -2,6 +2,7 @@
 
 'use strict';
 
+const { EventEmitter } = require('events');
 const Module = require('module');
 
 const originalModuleLoad = Module._load;
@@ -21,6 +22,7 @@ Module._load = function patchedModuleLoad(request, parent, isMain)
 };
 
 const YoLinkAPI = require('../yoLinkAPI');
+const mqtt = require('../mqtt');
 const GarageDoorDevice = require('../drivers/garage_door/device');
 const DoorSensorDevice = require('../drivers/door-sensor/device');
 
@@ -485,6 +487,72 @@ async function testMqttMessageMarksDeviceOnline()
 	assert(availability.length === 1, 'Expected availability not to change for another device');
 }
 
+function createFakeMqttClient()
+{
+	const client = new EventEmitter();
+	client.disconnecting = false;
+	client.subscribe = (topic, options, callback) =>
+	{
+		if (callback) callback(null);
+	};
+	client.publish = () => {};
+	client.end = () =>
+	{
+		client.disconnecting = true;
+	};
+	return client;
+}
+
+async function testMqttCloseKeepsEntryUntilDeliberateEnd()
+{
+	const api = new YoLinkAPI(createMockApp([]));
+	api.getHomeInfo = async () => ({ desc: 'Success', data: { id: 'HOME_US' } });
+
+	const fakeClient = createFakeMqttClient();
+	const originalConnect = mqtt.connect;
+	mqtt.connect = () => fakeClient;
+
+	try
+	{
+		// setupMQTTClient waits for the connect/subscribe handshake, so emit connect once the handlers are registered
+		setTimeout(() => fakeClient.emit('connect'), 0);
+		const connection = await api.setupMQTTClient({
+			UAID: UAID_A,
+			url: 'mqtt://example.invalid',
+			port: 8003,
+			username: 'token',
+			password: '',
+			serviceZoneID: 'us',
+		});
+		assert(connection && connection.MQTTClient === fakeClient, 'Expected setupMQTTClient to return a connection for the fake client');
+		api.MQTTList.push(connection);
+
+		// A transient drop: the library reconnects on its own, so the entry must survive
+		fakeClient.emit('close');
+		assert(api.MQTTList.includes(connection), 'Expected MQTT entry to survive a close without end()');
+
+		// A newer client for the same UAID/zone must not be evicted by the old client's late close
+		const replacement = {
+			UAID: UAID_A,
+			serviceZoneID: 'us',
+			homeID: 'HOME_US',
+			mqttReady: Promise.resolve(),
+			MQTTClient: createFakeMqttClient(),
+		};
+		api.MQTTList.push(replacement);
+
+		// A deliberate end(): the entry for this client is removed, the replacement stays
+		fakeClient.end(true);
+		fakeClient.emit('close');
+		assert(!api.MQTTList.includes(connection), 'Expected MQTT entry to be removed after a deliberate end()');
+		assert(api.MQTTList.includes(replacement), 'Expected the replacement MQTT entry to remain');
+	}
+	finally
+	{
+		mqtt.connect = originalConnect;
+	}
+}
+
 async function main()
 {
 	const results = [];
@@ -499,6 +567,7 @@ async function main()
 	results.push(await runTest('state refresh retries until device is reached', testStateRefreshRetriesUntilDeviceIsReached));
 	results.push(await runTest('state refresh retries when updateState throws', testStateRefreshRetriesWhenUpdateStateThrows));
 	results.push(await runTest('mqtt message marks device online', testMqttMessageMarksDeviceOnline));
+	results.push(await runTest('mqtt close keeps entry until deliberate end', testMqttCloseKeepsEntryUntilDeliberateEnd));
 
 	const failed = results.filter((result) => !result.ok);
 	if (failed.length > 0)
