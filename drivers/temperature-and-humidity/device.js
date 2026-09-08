@@ -1,8 +1,8 @@
 'use strict';
 
-const Homey = require('homey');
+const YoLinkDevice = require('../yoLinkDevice');
 
-module.exports = class THDevice extends Homey.Device
+module.exports = class THDevice extends YoLinkDevice
 {
 
 	/**
@@ -10,7 +10,7 @@ module.exports = class THDevice extends Homey.Device
 	 */
 	async onInit()
 	{
-		this.updateState();
+		this.refreshState().catch(this.error);
 		this.homey.app.updateLog('THDevice has been initialized');
 	}
 
@@ -65,10 +65,10 @@ module.exports = class THDevice extends Homey.Device
 			{
 				this.homey.app.updateLog(`Error updating state for device ${data.id}: ${state.msg}`, 0);
 				this.setWarning(`Error: ${state.msg}`).catch(this.error);
-				return;
+				return false;
 			}
 			this.setUnavailable('Offline').catch(this.error);
-			return;
+			return false;
 		}
 		this.setAvailable().catch(this.error);
 
@@ -81,6 +81,8 @@ module.exports = class THDevice extends Homey.Device
 			const batteryLevel = parseInt(state.data.state.battery, 10) / 0.04;
 			this.setCapabilityValue('measure_battery', batteryLevel).catch(this.error);
 		}
+
+		return true;
 	}
 
 	async processMQTTMessage(mqttMessage)
@@ -89,6 +91,8 @@ module.exports = class THDevice extends Homey.Device
 		{
 			return false;
 		}
+
+		this.markOnline();
 
 		// Log the device status
 		this.homey.app.updateLog(`TemperatureAndHumidityDevice MQTT message received: ${JSON.stringify(mqttMessage)}`);

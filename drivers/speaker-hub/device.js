@@ -1,8 +1,8 @@
 'use strict';
 
-const Homey = require('homey');
+const YoLinkDevice = require('../yoLinkDevice');
 
-module.exports = class SpeakerHubDevice extends Homey.Device
+module.exports = class SpeakerHubDevice extends YoLinkDevice
 {
 
 	/**
@@ -10,7 +10,7 @@ module.exports = class SpeakerHubDevice extends Homey.Device
 	 */
 	async onInit()
 	{
-		this.updateState();
+		this.refreshState().catch(this.error);
 		this.homey.app.updateLog('SpeakerHubDevice has been initialized');
 	}
 
@@ -19,7 +19,7 @@ module.exports = class SpeakerHubDevice extends Homey.Device
 	 */
 	async onAdded()
 	{
-		this.updateState();
+		this.refreshState().catch(this.error);
 		this.homey.app.updateLog('SpeakerHubDevice has been added');
 	}
 
@@ -68,7 +68,7 @@ module.exports = class SpeakerHubDevice extends Homey.Device
 					? state.desc
 					: 'Offline';
 				this.setUnavailable(unavailableMessage).catch(this.error);
-				return;
+				return false;
 			}
 
 			this.setAvailable().catch(this.error);
@@ -77,11 +77,13 @@ module.exports = class SpeakerHubDevice extends Homey.Device
 			this.homey.app.updateLog(`SpeakerHubDevice MQTT message received: ${JSON.stringify(state)}`);
 
 			this.setCapabilityValue('info', state.data.wifi.ip).catch(this.error);
+			return true;
 		}
 		catch (error)
 		{
 			this.homey.app.updateLog(`SpeakerHubDevice updateState failed: ${error.message}`, 0);
 			this.setUnavailable('Offline').catch(this.error);
+			return false;
 		}
 	}
 };
