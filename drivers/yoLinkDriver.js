@@ -47,7 +47,16 @@ module.exports = class yoLinkDriver extends Homey.Driver
 			UAID = typeof UAID === 'string' ? UAID.trim() : '';
 			if (UAID)
 			{
-				accessToken = await this.homey.app.yoLinkAPI.getAccessTokenForUAID(UAID, null);
+				try
+				{
+					accessToken = await this.homey.app.yoLinkAPI.getAccessTokenForUAID(UAID, null);
+				}
+				catch (err)
+				{
+					// Token refresh may fail (e.g. expired refresh_token or network not ready).
+					// Fall through to enter_secret so the user can re-enter their SecretKey.
+					accessToken = null;
+				}
 			}
 
 			// return true to continue so the secret can be entered if the access token could not be obtained
@@ -161,14 +170,12 @@ module.exports = class yoLinkDriver extends Homey.Driver
 
 	async onRepair(session, device)
 	{
-		let UAID = this.homey.settings.get('UAID');
-		let secretKey = this.homey.settings.get('secretKey');
-
 		session.setHandler('login', async (data) =>
 		{
-			UAID = typeof data.username === 'string' ? data.username.trim() : '';
-			secretKey = typeof data.password === 'string' ? data.password.trim() : '';
-			const accessToken = await this.homey.app.yoLinkAPI.getAccessTokenForUAID(UAID, secretKey);
+			const UAID = typeof data.username === 'string' ? data.username.trim() : '';
+			const secretKey = typeof data.password === 'string' ? data.password.trim() : '';
+			const serviceZone = device.getSetting('serviceZone');
+			const accessToken = await this.homey.app.yoLinkAPI.getAccessTokenForUAID(UAID, secretKey, serviceZone);
 			const credentialsAreValid = (accessToken !== null);
 			// return true to continue adding the device if the login succeeded
 			// return false to indicate to the user the login attempt failed

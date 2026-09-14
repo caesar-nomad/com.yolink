@@ -438,85 +438,108 @@ module.exports = class YoLinkAPI extends SimpleClass
 			: requestedServiceZoneID;
 		if (entry && this.isAccessTokenExpired(entry.expires_at))
 		{
-			const refreshPromise = this.tokenRefreshPromises[normalizedUAID] || (async () =>
+			if (SecretKey)
 			{
-				this.app.updateLog(`Access token for UAID ${normalizedUAID} has expired, attempting refresh`);
-
-				const currentEntry = this.UAIDList.find((item) => item.UAID === normalizedUAID);
-				if (!currentEntry)
-				{
-					throw new Error(`No token entry found for UAID ${normalizedUAID} during refresh`);
-				}
-
-				const preferredRefreshZone = currentEntry.serviceZoneID === 'eu' ? 'eu' : 'us';
-				const requestedRefreshZone = effectiveServiceZoneID === 'eu' ? 'eu' : 'us';
-				const refreshZoneOrder = this.getZoneAttemptOrder(preferredRefreshZone, requestedRefreshZone);
-
-				let refreshZone = refreshZoneOrder[0];
-				let newTokenData = null;
-				for (let index = 0; index < refreshZoneOrder.length; index += 1)
-				{
-					const attemptZone = refreshZoneOrder[index];
-					if (index > 0)
-					{
-						this.app.updateLog(`Retrying refresh token for UAID ${normalizedUAID} in alternate zone ${attemptZone}`);
-					}
-
-					const attemptData = await this.obtainAccessTokenWithRefreshToken(currentEntry.UAID, currentEntry.refresh_token, attemptZone);
-					if (attemptData && attemptData.state !== 'error' && attemptData.access_token)
-					{
-						newTokenData = attemptData;
-						refreshZone = attemptZone;
-						if (index > 0)
-						{
-							this.app.updateLog(`Refresh token succeeded for UAID ${normalizedUAID} after zone switch to ${attemptZone}`, 0);
-						}
-						break;
-					}
-
-					newTokenData = attemptData;
-					if (index < refreshZoneOrder.length - 1)
-					{
-						this.logTokenFailure(`Refresh token failed for UAID ${normalizedUAID}`, attemptData);
-					}
-				}
-
+				// SecretKey explicitly provided (e.g. from pair/repair flow) — use it directly.
+				// This is the critical fallback when the refresh_token has also expired; without
+				// it the repair flow would try the broken refresh_token and ignore the user's key.
+				this.app.updateLog(`Access token for UAID ${normalizedUAID} has expired; SecretKey provided, obtaining fresh token`);
+				const newTokenData = await this.obtainAccessTokenWithSecret(normalizedUAID, SecretKey, effectiveServiceZoneID);
 				if (!newTokenData || newTokenData.state === 'error' || !newTokenData.access_token)
 				{
-					this.logTokenFailure(`Failed to refresh access token for UAID ${normalizedUAID}`, newTokenData);
-					throw new Error(`Failed to refresh access token for UAID ${normalizedUAID}: ${newTokenData && newTokenData.msg ? newTokenData.msg : 'Unknown error'}`);
+					throw new Error(`Failed to obtain access token for UAID ${normalizedUAID}: ${newTokenData && newTokenData.msg ? newTokenData.msg : 'Unknown error'}`);
 				}
-
 				this.app.updateLog(`New token data for UAID ${normalizedUAID}: ${this.app.varToString(newTokenData)}`);
-
-				// Update the entry in the UAIDList
-				currentEntry.access_token = newTokenData.access_token;
-				currentEntry.refresh_token = newTokenData.refresh_token;
-				currentEntry.expires_at = this.getSafeExpiresAt(newTokenData.expires_in, normalizedUAID);
-				currentEntry.serviceZoneID = refreshZone;
-				this.app.updateLog(`Obtained new access token for UAID ${normalizedUAID}, expires at ${this.formatDateForLog(currentEntry.expires_at)}`, 0);
+				entry.access_token = newTokenData.access_token;
+				entry.refresh_token = newTokenData.refresh_token;
+				entry.expires_at = this.getSafeExpiresAt(newTokenData.expires_in, normalizedUAID);
+				entry.serviceZoneID = effectiveServiceZoneID;
+				this.app.updateLog(`Obtained new access token via SecretKey for UAID ${normalizedUAID}, expires at ${this.formatDateForLog(entry.expires_at)}`);
 				this.app.homey.settings.set('UAIDList', this.UAIDList);
 				this.refreshMQTTClientsForUAID(normalizedUAID);
-			})();
-
-			if (!this.tokenRefreshPromises[normalizedUAID])
-			{
-				this.tokenRefreshPromises[normalizedUAID] = refreshPromise;
 			}
-
-			try
+			else
 			{
-				await refreshPromise;
-			}
-			finally
-			{
-				if (this.tokenRefreshPromises[normalizedUAID] === refreshPromise)
+				const refreshPromise = this.tokenRefreshPromises[normalizedUAID] || (async () =>
 				{
-					delete this.tokenRefreshPromises[normalizedUAID];
-				}
-			}
+					this.app.updateLog(`Access token for UAID ${normalizedUAID} has expired, attempting refresh`);
 
-			entry = this.UAIDList.find((item) => item.UAID === normalizedUAID);
+					const currentEntry = this.UAIDList.find((item) => item.UAID === normalizedUAID);
+					if (!currentEntry)
+					{
+						throw new Error(`No token entry found for UAID ${normalizedUAID} during refresh`);
+					}
+
+					const preferredRefreshZone = currentEntry.serviceZoneID === 'eu' ? 'eu' : 'us';
+					const requestedRefreshZone = effectiveServiceZoneID === 'eu' ? 'eu' : 'us';
+					const refreshZoneOrder = this.getZoneAttemptOrder(preferredRefreshZone, requestedRefreshZone);
+
+					let refreshZone = refreshZoneOrder[0];
+					let newTokenData = null;
+					for (let index = 0; index < refreshZoneOrder.length; index += 1)
+					{
+						const attemptZone = refreshZoneOrder[index];
+						if (index > 0)
+						{
+							this.app.updateLog(`Retrying refresh token for UAID ${normalizedUAID} in alternate zone ${attemptZone}`);
+						}
+
+						const attemptData = await this.obtainAccessTokenWithRefreshToken(currentEntry.UAID, currentEntry.refresh_token, attemptZone);
+						if (attemptData && attemptData.state !== 'error' && attemptData.access_token)
+						{
+							newTokenData = attemptData;
+							refreshZone = attemptZone;
+							if (index > 0)
+							{
+								this.app.updateLog(`Refresh token succeeded for UAID ${normalizedUAID} after zone switch to ${attemptZone}`, 0);
+							}
+							break;
+						}
+
+						newTokenData = attemptData;
+						if (index < refreshZoneOrder.length - 1)
+						{
+							this.logTokenFailure(`Refresh token failed for UAID ${normalizedUAID}`, attemptData);
+						}
+					}
+
+					if (!newTokenData || newTokenData.state === 'error' || !newTokenData.access_token)
+					{
+						this.logTokenFailure(`Failed to refresh access token for UAID ${normalizedUAID}`, newTokenData);
+						throw new Error(`Failed to refresh access token for UAID ${normalizedUAID}: ${newTokenData && newTokenData.msg ? newTokenData.msg : 'Unknown error'}`);
+					}
+
+					this.app.updateLog(`New token data for UAID ${normalizedUAID}: ${this.app.varToString(newTokenData)}`);
+
+					// Update the entry in the UAIDList
+					currentEntry.access_token = newTokenData.access_token;
+					currentEntry.refresh_token = newTokenData.refresh_token;
+					currentEntry.expires_at = this.getSafeExpiresAt(newTokenData.expires_in, normalizedUAID);
+					currentEntry.serviceZoneID = refreshZone;
+					this.app.updateLog(`Obtained new access token for UAID ${normalizedUAID}, expires at ${this.formatDateForLog(currentEntry.expires_at)}`, 0);
+					this.app.homey.settings.set('UAIDList', this.UAIDList);
+					this.refreshMQTTClientsForUAID(normalizedUAID);
+				})();
+
+				if (!this.tokenRefreshPromises[normalizedUAID])
+				{
+					this.tokenRefreshPromises[normalizedUAID] = refreshPromise;
+				}
+
+				try
+				{
+					await refreshPromise;
+				}
+				finally
+				{
+					if (this.tokenRefreshPromises[normalizedUAID] === refreshPromise)
+					{
+						delete this.tokenRefreshPromises[normalizedUAID];
+					}
+				}
+
+				entry = this.UAIDList.find((item) => item.UAID === normalizedUAID);
+			}
 		}
 		else if (!entry && SecretKey)
 		{
