@@ -1,6 +1,6 @@
 {
 	"id": "com.yolink",
-	"version": "1.0.27",
+	"version": "1.0.28",
 	"compatibility": ">=12.5.0",
 	"sdk": 3,
 	"platforms": [

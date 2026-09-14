@@ -94,5 +94,8 @@
 	},
 	"1.0.27": {
 		"en": "Reject email-like UAID inputs and provide clearer error messages for invalid UAID formats."
+	},
+	"1.0.28": {
+		"en": "Devices recover from Offline: state refresh retries and the MQTT client stays registered across reconnects. Repair with a Secret Key now works after a reboot when the refresh token has expired. Tidied Water Depth Sensor settings: grouped under headings, simplified cable-length label and hint."
 	}
 }
