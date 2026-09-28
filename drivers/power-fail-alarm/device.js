@@ -75,10 +75,10 @@ module.exports = class PowerFailDevice extends Homey.Device
 
 		this.setCapabilityValue('alarm_power', state.data.state === 'alert').catch(this.error);
 
-		// The returned battery is a string with a level between 0 and 4, so convert to 0 to 1
-		if (state.data.battery)
+		// The returned battery is a level between 0 and 4 (0 = empty), so convert to 0 to 100
+		const batteryLevel = this.driver.getBatteryPercentage(state.data.battery);
+		if (batteryLevel !== null)
 		{
-			const batteryLevel = parseInt(state.data.battery, 10) / 0.04;
 			this.setCapabilityValue('measure_battery', batteryLevel).catch(this.error);
 		}
 
@@ -113,9 +113,9 @@ module.exports = class PowerFailDevice extends Homey.Device
 
 		this.setCapabilityValue('alarm_power', mqttData.state === 'alert').catch(this.error);
 
-		if (mqttData.battery)
+		const batteryLevel = this.driver.getBatteryPercentage(mqttData?.battery);
+		if (batteryLevel !== null)
 		{
-			const batteryLevel = parseInt(mqttData.battery, 10) / 0.04;
 			this.setCapabilityValue('measure_battery', batteryLevel).catch(this.error);
 		}
 

@@ -75,10 +75,10 @@ module.exports = class LeakSensorDevice extends Homey.Device
 		this.setCapabilityValue('alarm_water', state.data.state.state === 'alert').catch(this.error);
 		this.setCapabilityValue('measure_temperature', state.data.state.devTemperature).catch(this.error);
 
-		// The returned battery is a string with a level between 0 and 4, so convert to 0 to 1
-		if (state.data.state.battery)
+		// The returned battery is a level between 0 and 4 (0 = empty), so convert to 0 to 100
+		const batteryLevel = this.driver.getBatteryPercentage(state.data.state.battery);
+		if (batteryLevel !== null)
 		{
-			const batteryLevel = parseInt(state.data.state.battery, 10) / 0.04;
 			this.setCapabilityValue('measure_battery', batteryLevel).catch(this.error);
 		}
 
@@ -115,9 +115,9 @@ module.exports = class LeakSensorDevice extends Homey.Device
 			this.setCapabilityValue('measure_temperature', mqttData.devTemperature).catch(this.error);
 		}
 
-		if (mqttData.battery)
+		const batteryLevel = this.driver.getBatteryPercentage(mqttData?.battery);
+		if (batteryLevel !== null)
 		{
-			const batteryLevel = parseInt(mqttData.battery, 10) / 0.04;
 			this.setCapabilityValue('measure_battery', batteryLevel).catch(this.error);
 		}
 

@@ -73,13 +73,43 @@ module.exports = class THDevice extends Homey.Device
 		this.setAvailable().catch(this.error);
 
 		this.setCapabilityValue('measure_temperature', state.data.state.temperature).catch(this.error);
-		this.setCapabilityValue('measure_humidity', state.data.state.humidity).catch(this.error);
+		await this.updateHumidity(state.data.state.humidity);
 
-		// The returned battery is a string with a level between 0 and 4, so convert to 0 to 1
-		if (state.data.state.battery)
+		// The returned battery is a level between 0 and 4 (0 = empty), so convert to 0 to 100
+		const batteryLevel = this.driver.getBatteryPercentage(state.data.state.battery);
+		if (batteryLevel !== null)
 		{
-			const batteryLevel = parseInt(state.data.state.battery, 10) / 0.04;
 			this.setCapabilityValue('measure_battery', batteryLevel).catch(this.error);
+		}
+	}
+
+	// Temperature-only models (e.g. probe sensors) use the THSensor type but always report a humidity of 0.
+	// Show humidity only once the device has reported a non-zero value, so these models don't show a false 0%.
+	async updateHumidity(humidity)
+	{
+		if (typeof humidity !== 'number')
+		{
+			return;
+		}
+
+		if (humidity !== 0 && !this.getStoreValue('humidityReported'))
+		{
+			await this.setStoreValue('humidityReported', true).catch(this.error);
+		}
+
+		if (this.getStoreValue('humidityReported'))
+		{
+			if (!this.hasCapability('measure_humidity'))
+			{
+				this.homey.app.updateLog('THDevice reported humidity, adding measure_humidity capability');
+				await this.addCapability('measure_humidity').catch(this.error);
+			}
+			this.setCapabilityValue('measure_humidity', humidity).catch(this.error);
+		}
+		else if (this.hasCapability('measure_humidity'))
+		{
+			this.homey.app.updateLog('THDevice has not reported humidity, removing measure_humidity capability');
+			await this.removeCapability('measure_humidity').catch(this.error);
 		}
 	}
 
@@ -96,17 +126,14 @@ module.exports = class THDevice extends Homey.Device
 		// Process the MQTT message
 		if (mqttMessage.event === 'THSensor.Report')
 		{
-			if (mqttMessage.data.temperature)
+			if (typeof mqttMessage.data.temperature === 'number')
 			{
 				this.setCapabilityValue('measure_temperature', mqttMessage.data.temperature).catch(this.error);
 			}
-			if (mqttMessage.data.humidity)
+			await this.updateHumidity(mqttMessage.data.humidity);
+			const batteryLevel = this.driver.getBatteryPercentage(mqttMessage.data.battery);
+			if (batteryLevel !== null)
 			{
-				this.setCapabilityValue('measure_humidity', mqttMessage.data.humidity).catch(this.error);
-			}
-			if (mqttMessage.data.battery)
-			{
-				const batteryLevel = parseInt(mqttMessage.data.battery, 10) / 0.04;
 				this.setCapabilityValue('measure_battery', batteryLevel).catch(this.error);
 			}
 		}

@@ -9,7 +9,8 @@
 		"check": "npm run lint && npm run validate",
 		"test:harness:api": "node tests/yolinkapi.harness.js",
 		"test:harness:app": "node tests/app.harness.js",
-		"test:harness": "npm run test:harness:api && npm run test:harness:app"
+		"test:harness:devices": "node tests/devices.harness.js",
+		"test:harness": "npm run test:harness:api && npm run test:harness:app && npm run test:harness:devices"
 	},
 	"devDependencies": {
 		"@types/homey": "npm:homey-apps-sdk-v3-types@^0.2.2",

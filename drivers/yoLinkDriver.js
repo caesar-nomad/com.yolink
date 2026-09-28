@@ -182,6 +182,20 @@ module.exports = class yoLinkDriver extends Homey.Driver
 		return this.homey.app.yoLinkAPI.getDeviceStatus(data.UAID, data.type, data.id, data.deviceToken, settings.serviceZone);
 	}
 
+	// YoLink reports battery as a level from 0 (empty) to 4 (full), as a number or a string.
+	// Returns the level as a percentage, or null when no valid level was reported.
+	// Level 0 must still be reported so that an empty battery is not hidden.
+	getBatteryPercentage(battery)
+	{
+		const level = parseInt(battery, 10);
+		if (Number.isNaN(level))
+		{
+			return null;
+		}
+
+		return Math.min(Math.max(level, 0), 4) * 25;
+	}
+
 	updateMQTTState(data)
 	{
 		const command = {

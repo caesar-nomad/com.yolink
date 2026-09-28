@@ -134,10 +134,10 @@ module.exports = class WaterMeterControllerDevice extends Homey.Device
 		this.setCapabilityValue('meter_water', state.data.state.state.meter / meterConversion).catch(this.error);
 		this.setCapabilityValue('onoff', state.data.state.state.valve === 'open').catch(this.error);
 
-		// The returned battery is a string with a level between 0 and 4, so convert to 0 to 1
-		if (state.data.state.battery)
+		// The returned battery is a level between 0 and 4 (0 = empty), so convert to 0 to 100
+		const batteryLevel = this.driver.getBatteryPercentage(state.data.state.battery);
+		if (batteryLevel !== null)
 		{
-			const batteryLevel = parseInt(state.data.state.battery, 10) / 0.04;
 			this.setCapabilityValue('measure_battery', batteryLevel).catch(this.error);
 		}
 
@@ -225,9 +225,9 @@ module.exports = class WaterMeterControllerDevice extends Homey.Device
 		}
 
 		// Process the MQTT message
-		if (mqttData.battery)
+		const batteryLevel = this.driver.getBatteryPercentage(mqttData?.battery);
+		if (batteryLevel !== null)
 		{
-			const batteryLevel = parseInt(mqttData.battery, 10) / 0.04;
 			this.setCapabilityValue('measure_battery', batteryLevel).catch(this.error);
 		}
 
